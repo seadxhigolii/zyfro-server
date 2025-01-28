@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>Zyfro.Pro.Server.Persistence</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Zyfro.Pro.Server.Application\Zyfro.Pro.Server.Application.csproj" />
+    <ProjectReference Include="..\Zyfro.Pro.Server.Common\Zyfro.Pro.Server.Common.csproj" />
+    <ProjectReference Include="..\Zyfro.Pro.Server.Domain\Zyfro.Pro.Server.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

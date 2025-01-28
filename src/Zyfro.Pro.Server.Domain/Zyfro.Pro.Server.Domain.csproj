@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>Zyfro.Pro.Server.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Enums\" />
+  </ItemGroup>
+
+</Project>
