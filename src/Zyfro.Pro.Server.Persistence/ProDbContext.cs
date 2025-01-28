@@ -32,8 +32,16 @@ namespace Zyfro.Pro.Server.Persistence
 
             modelBuilder.Model.GetEntityTypes().ToList().ForEach(entityType =>
             {
-                if (entityType.ClrType == typeof(BaseEntity<>) || entityType.ClrType == typeof(EntityTimeStamp))
-                    modelBuilder.Entity<EntityTimeStamp>(x => x.UseBaseConfigurations());
+                var type = entityType.ClrType;
+
+                if (type.BaseType != null && type.BaseType.IsGenericType && type.BaseType.GetGenericTypeDefinition() == typeof(BaseEntity<>))
+                {
+                    var method = typeof(BaseEntityConfiguration)
+                        .GetMethod(nameof(BaseEntityConfiguration.UseBaseConfigurations))
+                        ?.MakeGenericMethod(type, type.BaseType.GenericTypeArguments[0]);
+
+                    method?.Invoke(null, new object[] { modelBuilder.Entity(type) });
+                }
 
                 if (entityType.GetTableName() is string table && table.StartsWith("AspNet"))
                     entityType.SetTableName(table[6..]);
@@ -41,5 +49,6 @@ namespace Zyfro.Pro.Server.Persistence
 
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
+
     }
 }

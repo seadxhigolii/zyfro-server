@@ -1,32 +1,35 @@
 ﻿using Zyfro.Pro.Server.Domain.Entities.Base;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
 
 namespace Zyfro.Pro.Server.Persistence.Configurations.Base
 {
     public static class BaseEntityConfiguration
     {
-        public static void UseBaseConfigurations(this EntityTypeBuilder<EntityTimeStamp> builder, string keyName = "Id")
+        public static void UseBaseConfigurations<T, TKey>(this EntityTypeBuilder<T> builder)
+            where T : BaseEntity<TKey>
+            where TKey : IEquatable<TKey>
         {
-            builder.HasKey(keyName);
+            builder.HasKey(e => e.Id);
 
-            builder.Property(keyName)
-                .HasColumnName(keyName)
+            builder.Property(e => e.Id)
+                .HasColumnName("Id")
                 .IsRequired();
 
-            builder.Property(x => x.CreatedAt)
-                .HasColumnName("CreatedAt")
+            builder.Property(e => e.CreatedAtUtc)
+                .HasColumnName("CreatedAtUtc")
                 .IsRequired();
 
-            builder.Property(x => x.UpdatedAt)
-                .HasColumnName("UpdatedAt")
+            builder.Property(e => e.LastUpdatedAtUtc)
+                .HasColumnName("LastUpdatedAtUtc")
                 .IsRequired();
 
-            builder.Property(x => x.DeletedAt)
-                .HasColumnName("DeletedAt")
+            builder.Property(e => e.DeletedAtUtc)
+                .HasColumnName("DeletedAtUtc")
                 .IsRequired(false);
 
-            builder.HasQueryFilter(x => x.DeletedAt != null);
+            builder.HasQueryFilter(e => e.DeletedAtUtc == null);
         }
     }
 }
