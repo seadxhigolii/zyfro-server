@@ -10,6 +10,7 @@ namespace Zyfro.Pro.Server.Api.Extensions
             services.AddControllers(opt => opt.Filters.Add<ExceptionFilter>());
             services.AddSiteCors();
             services.AddDbContext(configuration);
+            services.AddIdentity();
             services.AddJwtAuthentication(configuration);
             services.AddSiteSwagger();
             services.AddMediator();
