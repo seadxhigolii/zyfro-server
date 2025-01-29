@@ -15,6 +15,8 @@
 
         public const string IncorrectPassword = "Password Incorrect!";
 
+        public const string PasswordsMustMatch = "Passwords must match";
+
         public const string CurrentPassowrdIncorrect = "Current password is incorrect!";
 
         public const string NoPermission = "You have no permission for this action!";

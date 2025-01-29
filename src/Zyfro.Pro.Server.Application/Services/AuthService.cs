@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System;
 using Microsoft.IdentityModel.Tokens;
 using System.Linq;
+using Zyfro.Pro.Server.Common.Constants;
 
 namespace Zyfro.Pro.Server.Application.Services
 {
@@ -28,30 +29,38 @@ namespace Zyfro.Pro.Server.Application.Services
 
         public async Task<ServiceResponse<string>> RegisterAsync(RegisterModel model)
         {
-            if (model.Password != model.ConfirmPassword)
-                return ServiceResponse<string>.ErrorResponse("Passwords do not match", 400);
-
-            var existingUser = await _userManager.FindByEmailAsync(model.Email);
-            if (existingUser != null)
-                return ServiceResponse<string>.ErrorResponse("User already exists", 409);
-
-            var user = new ApplicationUser
+            try
             {
-                UserName = model.Email,
-                Email = model.Email,
-                FirstName = model.FirstName,
-                LastName = model.LastName
-            };
+                if (model.Password != model.ConfirmPassword)
+                    return ServiceResponse<string>.ErrorResponse(ValidatorMessages.PasswordsMustMatch, 400);
 
-            var result = await _userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return ServiceResponse<string>.ErrorResponse(errors, 400);
+                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                if (existingUser != null)
+                    return ServiceResponse<string>.ErrorResponse(ValidatorMessages.AlreadyExists("User"), 409);
+
+                var user = new ApplicationUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    FirstName = model.FirstName,
+                    LastName = model.LastName
+                };
+
+                var result = await _userManager.CreateAsync(user, model.Password);
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    return ServiceResponse<string>.ErrorResponse(errors, 400);
+                }
+
+                var token = await GenerateJwtToken(user);
+                return ServiceResponse<string>.SuccessResponse(token, "User registered successfully", 201);
             }
-
-            var token = await GenerateJwtToken(user);
-            return ServiceResponse<string>.SuccessResponse(token, "User registered successfully", 201);
+            catch (Exception)
+            {
+                throw;
+            }
+        
         }
 
         public async Task<string> GenerateJwtToken(ApplicationUser user)

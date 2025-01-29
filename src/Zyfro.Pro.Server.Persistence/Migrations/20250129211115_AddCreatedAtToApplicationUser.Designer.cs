@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Zyfro.Pro.Server.Persistence;
@@ -11,9 +12,11 @@ using Zyfro.Pro.Server.Persistence;
 namespace Zyfro.Pro.Server.Persistence.Migrations
 {
     [DbContext(typeof(ProDbContext))]
-    partial class ProDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250129211115_AddCreatedAtToApplicationUser")]
+    partial class AddCreatedAtToApplicationUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
