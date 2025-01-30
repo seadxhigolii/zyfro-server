@@ -5,7 +5,7 @@
         public static string OneNotFound() => $"One or more data on list cannot be found";
         public static string NotEmpty(string msg) => $"{msg} must not be empty";
         public static string NotFound(string msg) => $"{msg} can not be found!";
-        public static string MinLength(string msg, int length = ValidatorConditions.PasswordMinLength) => $"{msg} must be at last {length} characters";
+        public static string MinLength(string msg, int length = ValidatorConditions.PasswordMinLength) => $"{msg} must be at least {length} characters";
         public static string FormatNotMatch(string msg) => $"Invalid {msg} format!";
         public static string AlreadyExists(string msg) => $"{msg} is already registered";
         public static string OnDeleteRestricted(string msg) => $"You cannot delete {msg} because has children!";

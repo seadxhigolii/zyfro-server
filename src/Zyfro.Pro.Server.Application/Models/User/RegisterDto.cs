@@ -1,6 +1,6 @@
 ﻿namespace Zyfro.Pro.Server.Application.Models.User
 {
-    public class RegisterModel
+    public class RegisterDto
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }

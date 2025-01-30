@@ -7,7 +7,8 @@ namespace Zyfro.Pro.Server.Application.Interfaces
 {
     public interface IAuthService
     {
-        Task<ServiceResponse<string>> RegisterAsync(RegisterModel model);
+        Task<ServiceResponse<string>> RegisterAsync(RegisterDto model);
+        Task<ServiceResponse<string>> LoginAsync(LoginDto model);
         Task<string> GenerateJwtToken(ApplicationUser user);
     }
 }

@@ -1,4 +1,5 @@
 using Zyfro.Pro.Server.Api.Extensions;
+using Zyfro.Pro.Server.Application.Infrastructure.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,5 +25,7 @@ if (app.Environment.IsDevelopment())
 app.UseServices();
 
 app.MapControllers();
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<RateLimitingMiddleware>();
 
 app.Run();

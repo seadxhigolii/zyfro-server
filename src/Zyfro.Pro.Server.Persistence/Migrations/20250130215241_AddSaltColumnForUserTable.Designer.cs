@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Zyfro.Pro.Server.Persistence;
@@ -11,9 +12,11 @@ using Zyfro.Pro.Server.Persistence;
 namespace Zyfro.Pro.Server.Persistence.Migrations
 {
     [DbContext(typeof(ProDbContext))]
-    partial class ProDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250130215241_AddSaltColumnForUserTable")]
+    partial class AddSaltColumnForUserTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,9 +52,6 @@ namespace Zyfro.Pro.Server.Persistence.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<int>("FailedLoginAttempts")
-                        .HasColumnType("integer");
-
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -65,9 +65,6 @@ namespace Zyfro.Pro.Server.Persistence.Migrations
                     b.Property<DateTime>("LastUpdatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("LastUpdatedAtUtc");
-
-                    b.Property<DateTime?>("LockoutEndTime")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()

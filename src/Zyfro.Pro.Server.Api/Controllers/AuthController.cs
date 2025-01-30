@@ -19,12 +19,23 @@ namespace Zyfro.Pro.Server.Api.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ServiceResponse<string>.ErrorResponse("Invalid request data", 400));
 
             var response = await _authService.RegisterAsync(model);
+
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ServiceResponse<string>.ErrorResponse("Invalid request data", 400));
+
+            var response = await _authService.LoginAsync(model);
 
             return StatusCode(response.StatusCode, response);
         }

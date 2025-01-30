@@ -20,9 +20,18 @@ namespace Zyfro.Pro.Server.Persistence.Configurations
                 .HasMaxLength(100)
                 .IsRequired();
 
+            builder.Property(x => x.Salt)
+                .IsRequired();
+
             builder.Property(x => x.Email)
                 .HasMaxLength(255)
                 .IsRequired();
+
+            builder.Property(x => x.FailedLoginAttempts)
+                .IsRequired();
+
+            builder.Property(x => x.LockoutEndTime)
+                .IsRequired(false);
 
             builder.Property(x => x.PasswordHash)
                 .HasMaxLength(512)
