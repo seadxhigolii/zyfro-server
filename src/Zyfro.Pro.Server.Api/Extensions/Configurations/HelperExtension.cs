@@ -6,7 +6,8 @@ namespace Zyfro.Pro.Server.Api.Extensions.Configurations
     {
         public static void UseHelpers(this IApplicationBuilder app)
         {
-            AuthHelper.Configure(app.ApplicationServices.GetService<IHttpContextAccessor>());
+            var httpContextAccessor = app.ApplicationServices.GetRequiredService<IHttpContextAccessor>();
+            AuthHelper.Configure(httpContextAccessor);
         }
     }
 }
