@@ -2,14 +2,12 @@
 using Zyfro.Pro.Server.Api.Controllers.Base;
 using Zyfro.Pro.Server.Application.Interfaces;
 using Zyfro.Pro.Server.Application.Models.User;
-using Zyfro.Pro.Server.Application.Services.TestService.Commands.AddItem;
-using Zyfro.Pro.Server.Application.Services.TestService.Queries.Get;
 using Zyfro.Pro.Server.Common.Response;
 
 namespace Zyfro.Pro.Server.Api.Controllers
 {
     [Route("api/auth")]
-    public class AuthController : ControllerBase
+    public class AuthController : BaseController
     {
         private readonly IAuthService _authService;
 

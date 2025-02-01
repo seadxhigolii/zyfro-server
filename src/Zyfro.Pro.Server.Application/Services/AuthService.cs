@@ -4,16 +4,10 @@ using Zyfro.Pro.Server.Domain.Entities;
 using Zyfro.Pro.Server.Common.Response;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using System.Collections.Generic;
 using System;
-using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using Zyfro.Pro.Server.Common.Constants;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
 using Zyfro.Pro.Server.Common.Helpers;
 
 namespace Zyfro.Pro.Server.Application.Services
@@ -47,7 +41,7 @@ namespace Zyfro.Pro.Server.Application.Services
 
             var salt = PasswordHasher.GenerateSalt();
 
-            var passwordHashed = HashPassword(model.Password, salt);
+            var passwordHashed = AuthHelper.HashPassword(model.Password, salt);
             var user = new ApplicationUser
             {
                 Email = model.Email.ToLowerInvariant(),
@@ -60,7 +54,8 @@ namespace Zyfro.Pro.Server.Application.Services
             var result = await _dbContext.ApplicationUsers.AddAsync(user);
             await _dbContext.SaveChangesAsync();
 
-            var token = await GenerateJwtToken(user);
+            string secret = _configuration["TokenValidaton:Secret"];
+            var token = AuthHelper.GenerateJwtToken(user, secret);
             return ServiceResponse<string>.SuccessResponse(token, "User registered successfully", 200);
         }
 
@@ -78,7 +73,7 @@ namespace Zyfro.Pro.Server.Application.Services
                 return ServiceResponse<string>.ErrorResponse("Your account is locked. Try again later.", 403);
             }
 
-            bool verifyPass = VerifyPassword(model.Password, user.PasswordHash, user.Salt);
+            bool verifyPass = AuthHelper.VerifyPassword(model.Password, user.PasswordHash, user.Salt);
 
             if (verifyPass)
             {
@@ -86,7 +81,8 @@ namespace Zyfro.Pro.Server.Application.Services
                 user.LockoutEndTime = null;
                 await _dbContext.SaveChangesAsync();
 
-                var token = await GenerateJwtToken(user);
+                string secret = _configuration["TokenValidaton:Secret"];
+                var token = AuthHelper.GenerateJwtToken(user, secret);
                 return ServiceResponse<string>.SuccessResponse(token, "User logged in successfully", 200);
             }
 
@@ -99,47 +95,6 @@ namespace Zyfro.Pro.Server.Application.Services
 
             await _dbContext.SaveChangesAsync();
             return ServiceResponse<string>.ErrorResponse("Email or Password is wrong", 401);
-        }
-
-
-        public async Task<string> GenerateJwtToken(ApplicationUser user)
-        {
-            return await Task.Run(() =>
-            {
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["TokenValidaton:Secret"]));
-                var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email)
-                };
-
-                var token = new JwtSecurityToken(
-                    claims: claims,
-                    expires: DateTime.UtcNow.AddHours(5),
-                    signingCredentials: credentials
-                );
-
-                return new JwtSecurityTokenHandler().WriteToken(token);
-            });
-        }
-
-        private static string HashPassword(string password, string salt)
-        {
-            using (var rfc2898DeriveBytes = new Rfc2898DeriveBytes(password, Convert.FromBase64String(salt), 100000, HashAlgorithmName.SHA256))
-            {
-                return Convert.ToBase64String(rfc2898DeriveBytes.GetBytes(32)); // 256-bit hash
-            }
-        }
-        private static bool VerifyPassword(string inputPassword, string storedHash, string storedSalt)
-        {
-            string hashedInput = HashPassword(inputPassword, storedSalt);
-
-            return CryptographicOperations.FixedTimeEquals(
-                Convert.FromBase64String(hashedInput),
-                Convert.FromBase64String(storedHash)
-            );
-        }
+        }        
     }
 }

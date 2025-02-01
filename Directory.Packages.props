@@ -1,0 +1,5 @@
+﻿<Project>
+  <ItemGroup>
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.3.1" />
+  </ItemGroup>
+</Project>

@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
 using System.Net;
 using System.Text.Json;
@@ -10,12 +10,12 @@ namespace Zyfro.Pro.Server.Application.Infrastructure.Middlewares
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly ILogger<ExceptionMiddleware> _logger;
+        private readonly Serilog.ILogger _logger;
 
-        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
+        public ExceptionMiddleware(RequestDelegate next)
         {
             _next = next;
-            _logger = logger;
+            _logger = Log.ForContext<ExceptionMiddleware>();
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -26,9 +26,16 @@ namespace Zyfro.Pro.Server.Application.Infrastructure.Middlewares
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An unhandled exception occurred.");
+                LogException(context, ex);
                 await HandleExceptionAsync(context, ex);
             }
+        }
+
+        private void LogException(HttpContext context, Exception ex)
+        {
+            _logger.Error(ex, "An unhandled exception occurred at {Path}. RequestId: {RequestId}",
+                context.Request.Path,
+                context.TraceIdentifier);
         }
 
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)

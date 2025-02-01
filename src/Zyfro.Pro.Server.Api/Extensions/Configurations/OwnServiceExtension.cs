@@ -8,6 +8,7 @@ namespace Zyfro.Pro.Server.Api.Extensions.Configurations
         public static void AddOwnService(this IServiceCollection services)
         {
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUserService, UserService>();
         }
     }
 }

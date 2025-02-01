@@ -19,6 +19,7 @@ namespace Zyfro.Pro.Server.Api.Extensions
             services.AddOptions(configuration);
             services.AddMemoryCache();
             services.AddHttpContextAccessor();
+            services.AddSerilogConfiguration(configuration);
 
             return services;
         }

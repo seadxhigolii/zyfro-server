@@ -8,5 +8,6 @@ namespace Zyfro.Pro.Server.Domain.Entities.Base
         public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
         public DateTime LastUpdatedAtUtc { get; set; }
         public DateTime? DeletedAtUtc { get; set; }
+        public bool Deleted { get; set; }
     }
 }
