@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Collections.Generic;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Zyfro.Pro.Server.Common.Helpers
 {
@@ -60,6 +61,19 @@ namespace Zyfro.Pro.Server.Common.Helpers
                 Convert.FromBase64String(hashedInput),
                 Convert.FromBase64String(storedHash)
             );
+        }
+
+        public static string GetCurrentUserId()
+        {
+            var httpContext = HttpContextAccessor?.HttpContext;
+            if (httpContext == null || !httpContext.User.Identity.IsAuthenticated)
+                return null;
+
+            var userId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return null;
+
+            return userId;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Zyfro.Pro.Server.Domain.Entities;
 using Zyfro.Pro.Server.Application.Interfaces;
+using Zyfro.Pro.Server.Common.Response;
 
 namespace Zyfro.Pro.Server.Api.Controllers
 {
@@ -17,7 +18,12 @@ namespace Zyfro.Pro.Server.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllDocuments()
         {
-            return Ok();
+            if (!ModelState.IsValid)
+                return BadRequest(ServiceResponse<string>.ErrorResponse("Invalid request data", 400));
+
+            var response = await _documentService.GetAllDocuments();
+
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpGet("{id}")]
