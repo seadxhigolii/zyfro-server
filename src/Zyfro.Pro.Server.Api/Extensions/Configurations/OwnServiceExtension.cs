@@ -9,6 +9,7 @@ namespace Zyfro.Pro.Server.Api.Extensions.Configurations
         {
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IDocumentService, DocumentService>();
         }
     }
 }
