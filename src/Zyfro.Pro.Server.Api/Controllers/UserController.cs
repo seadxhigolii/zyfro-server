@@ -2,7 +2,6 @@
 using Zyfro.Pro.Server.Api.Controllers.Base;
 using Zyfro.Pro.Server.Application.Interfaces;
 using Zyfro.Pro.Server.Application.Models.User;
-using Zyfro.Pro.Server.Common.Response;
 
 namespace Zyfro.Pro.Server.Api.Controllers
 {
@@ -21,9 +20,6 @@ namespace Zyfro.Pro.Server.Api.Controllers
             [HttpGet("getById/{id}")]
             public async Task<IActionResult> GetById(Guid id)
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ServiceResponse<string>.ErrorResponse("Invalid request data", 400));
-
                 var response = await _userService.GetByIdAsync(id);
 
                 return StatusCode(response.StatusCode, response);
@@ -32,9 +28,6 @@ namespace Zyfro.Pro.Server.Api.Controllers
             [HttpPut("update/{id}")]
             public async Task<IActionResult> Login([FromBody] UpdateUserDto model, Guid id)
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ServiceResponse<string>.ErrorResponse("Invalid request data", 400));
-
                 var response = await _userService.UpdateUserAsync(model, id);
 
                 return StatusCode(response.StatusCode, response);
@@ -43,9 +36,6 @@ namespace Zyfro.Pro.Server.Api.Controllers
             [HttpDelete("delete/{id}")]
             public async Task<IActionResult> Delete(Guid id)
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ServiceResponse<string>.ErrorResponse("Invalid request data", 400));
-
                 var response = await _userService.DeleteUserAsync(id);
 
                 return StatusCode(response.StatusCode, response);

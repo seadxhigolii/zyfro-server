@@ -18,9 +18,6 @@ namespace Zyfro.Pro.Server.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllDocuments()
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ServiceResponse<string>.ErrorResponse("Invalid request data", 400));
-
             var response = await _documentService.GetAllDocuments();
 
             return StatusCode(response.StatusCode, response);
@@ -29,9 +26,6 @@ namespace Zyfro.Pro.Server.Api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDocumentById(Guid id)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ServiceResponse<string>.ErrorResponse("Invalid request data", 400));
-
             var response = await _documentService.GetAllDocuments();
 
             return StatusCode(response.StatusCode, response);
@@ -40,7 +34,9 @@ namespace Zyfro.Pro.Server.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateDocument([FromBody] Document document)
         {
-            return Ok();
+            var response = await _documentService.GetAllDocuments();
+
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpPut("{id}")]

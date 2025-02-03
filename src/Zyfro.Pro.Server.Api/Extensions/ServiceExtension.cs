@@ -7,7 +7,11 @@ namespace Zyfro.Pro.Server.Api.Extensions
     {
         public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddControllers(opt => opt.Filters.Add<ExceptionFilter>());
+            services.AddControllers(options =>
+            {
+                options.Filters.Add<ExceptionFilter>();
+                options.Filters.Add<ValidateModelAttribute>();
+            });
             services.AddSiteCors();
             services.AddDbContext(configuration);
             services.AddJwtAuthentication(configuration);

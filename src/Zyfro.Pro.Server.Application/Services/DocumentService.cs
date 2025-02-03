@@ -31,5 +31,10 @@ namespace Zyfro.Pro.Server.Application.Services
 
             return ServiceResponse<Document>.SuccessResponse(data, "Success", 200);
         }
+        public async Task<ServiceResponse<bool>> CreateDocument(Document model)
+        {
+            Guid currentUserId = Guid.Parse(AuthHelper.GetCurrentUserId());
+            return ServiceResponse<bool>.SuccessResponse(false, "Document Upload Failed", 500);
+        }
     }
 }
