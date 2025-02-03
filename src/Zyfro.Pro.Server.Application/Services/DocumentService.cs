@@ -25,5 +25,11 @@ namespace Zyfro.Pro.Server.Application.Services
 
             return ServiceResponse<List<Document>>.SuccessResponse(data, "Success", 200);
         }
+        public async Task<ServiceResponse<Document>> GetDocumentById(Guid id)
+        {
+            var data = await _proDbContext.Documents.FindAsync(id);
+
+            return ServiceResponse<Document>.SuccessResponse(data, "Success", 200);
+        }
     }
 }

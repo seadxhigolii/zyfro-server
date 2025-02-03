@@ -29,7 +29,12 @@ namespace Zyfro.Pro.Server.Api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDocumentById(Guid id)
         {
-            return Ok();
+            if (!ModelState.IsValid)
+                return BadRequest(ServiceResponse<string>.ErrorResponse("Invalid request data", 400));
+
+            var response = await _documentService.GetAllDocuments();
+
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpPost]
