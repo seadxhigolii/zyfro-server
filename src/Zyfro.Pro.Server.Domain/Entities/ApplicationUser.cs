@@ -15,6 +15,8 @@ namespace Zyfro.Pro.Server.Domain.Entities
         public int FailedLoginAttempts { get; set; } = 0;
         public DateTime? LockoutEndTime { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public Company Company { get; set; }
         public ICollection<Document> Documents { get; set; }
     }
 }
