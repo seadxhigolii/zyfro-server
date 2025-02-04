@@ -19,7 +19,7 @@ namespace Zyfro.Pro.Server.Application.Services.AWS
 
         public S3Service(IConfiguration configuration)
         {
-            var awsOptions = configuration.GetSection("AWS");
+            var awsOptions = configuration.GetSection("AWS:S3");
             _s3Client = new AmazonS3Client(awsOptions["AccessKey"], awsOptions["SecretKey"], Amazon.RegionEndpoint.GetBySystemName(awsOptions["Region"]));
             _bucketName = awsOptions["BucketName"];
         }
