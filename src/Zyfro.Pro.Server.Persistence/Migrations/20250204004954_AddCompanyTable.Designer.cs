@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Zyfro.Pro.Server.Persistence;
@@ -11,9 +12,11 @@ using Zyfro.Pro.Server.Persistence;
 namespace Zyfro.Pro.Server.Persistence.Migrations
 {
     [DbContext(typeof(ProDbContext))]
-    partial class ProDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250204004954_AddCompanyTable")]
+    partial class AddCompanyTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,7 +33,7 @@ namespace Zyfro.Pro.Server.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("Id");
 
-                    b.Property<Guid?>("CompanyId")
+                    b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -570,7 +573,8 @@ namespace Zyfro.Pro.Server.Persistence.Migrations
                     b.HasOne("Zyfro.Pro.Server.Domain.Entities.Company", "Company")
                         .WithMany("ApplicationUsers")
                         .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Company");
                 });

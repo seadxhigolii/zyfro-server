@@ -9,7 +9,7 @@ namespace Zyfro.Pro.Server.Domain.Entities
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
-        public Guid CompanyId { get; set; }
+        public Guid? CompanyId { get; set; }
         public string PasswordHash { get; set; }
         public string Salt { get; set; }
         public int FailedLoginAttempts { get; set; } = 0;
