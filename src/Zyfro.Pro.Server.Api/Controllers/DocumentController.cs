@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Zyfro.Pro.Server.Domain.Entities;
 using Zyfro.Pro.Server.Application.Interfaces;
-using Zyfro.Pro.Server.Common.Response;
 
 namespace Zyfro.Pro.Server.Api.Controllers
 {
@@ -10,7 +9,6 @@ namespace Zyfro.Pro.Server.Api.Controllers
     public class DocumentController : ControllerBase
     {
         private readonly IDocumentService _documentService;
-
         public DocumentController(IDocumentService documentService)
         {
             _documentService = documentService;
@@ -32,11 +30,23 @@ namespace Zyfro.Pro.Server.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateDocument([FromBody] Document document)
+        public async Task<IActionResult> CreateDocument(IFormFile file)
         {
-            var response = await _documentService.GetAllDocuments();
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
 
-            return StatusCode(response.StatusCode, response);
+            var response = await _documentService.CreateDocument(file);
+
+            if (response.Success)
+            {
+                return Ok(new { Message = response.Message, Data = response.Data });
+            }
+            else
+            {
+                return StatusCode(response.StatusCode, new { Message = response.Message });
+            }
         }
 
         [HttpPut("{id}")]

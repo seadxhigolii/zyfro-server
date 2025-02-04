@@ -13,6 +13,7 @@ namespace Zyfro.Pro.Server.Application.Interfaces
 
         DbSet<ApplicationUser> ApplicationUsers { get; set; }
         DbSet<Document> Documents { get; set; }
+        DbSet<Company> Companies { get; set; }
         DbSet<AuditLog> AuditLogs { get; set; }
         DbSet<DocumentTag> DocumentTags { get; set; }
         DbSet<DocumentVersion> DocumentVersions { get; set; }

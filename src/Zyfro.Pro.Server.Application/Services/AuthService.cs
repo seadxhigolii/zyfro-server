@@ -28,7 +28,7 @@ namespace Zyfro.Pro.Server.Application.Services
             if (model.Password != model.ConfirmPassword)
                 return ServiceResponse<string>.ErrorResponse(ValidatorMessages.PasswordsMustMatch, 400);
 
-            var existingUser = await _dbContext.ApplicationUsers.Where(x=>x.Email == model.Email).FirstOrDefaultAsync();
+            var existingUser = await _dbContext.ApplicationUsers.Where(x=>x.Email.ToLower() == model.Email.ToLower()).FirstOrDefaultAsync();
 
             if (existingUser != null)
                 return ServiceResponse<string>.ErrorResponse(ValidatorMessages.AlreadyExists("User"), 409);
@@ -42,16 +42,32 @@ namespace Zyfro.Pro.Server.Application.Services
             var salt = PasswordHasher.GenerateSalt();
 
             var passwordHashed = AuthHelper.HashPassword(model.Password, salt);
+
+            var existingCompany = await _dbContext.Companies.Where(x => x.Name.ToLower() == model.CompanyName.ToLower()).FirstOrDefaultAsync();
+
+            if (existingCompany != null)
+                return ServiceResponse<string>.ErrorResponse(ValidatorMessages.AlreadyExists("Company"), 409);
+
+            var company = new Company
+            {
+                Id = Guid.NewGuid(),
+                Name = model.CompanyName
+            };
+
+            var companyResult = await _dbContext.Companies.AddAsync(company);
+            await _dbContext.SaveChangesAsync();
+
             var user = new ApplicationUser
             {
                 Email = model.Email.ToLowerInvariant(),
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 PasswordHash = passwordHashed,
-                Salt = salt
+                Salt = salt,
+                CompanyId = company.Id
             };
 
-            var result = await _dbContext.ApplicationUsers.AddAsync(user);
+            var userResult = await _dbContext.ApplicationUsers.AddAsync(user);
             await _dbContext.SaveChangesAsync();
 
             string secret = _configuration["TokenValidaton:Secret"];

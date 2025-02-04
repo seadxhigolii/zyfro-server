@@ -27,6 +27,11 @@ namespace Zyfro.Pro.Server.Persistence.Configurations
                 .WithMany(x => x.Documents)
                 .HasForeignKey(x => x.OwnerId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.Company)
+                .WithMany(x => x.Documents)
+                .HasForeignKey(x => x.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

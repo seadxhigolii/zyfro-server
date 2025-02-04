@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Zyfro.Pro.Server.Persistence;
@@ -11,9 +12,11 @@ using Zyfro.Pro.Server.Persistence;
 namespace Zyfro.Pro.Server.Persistence.Migrations
 {
     [DbContext(typeof(ProDbContext))]
-    partial class ProDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250204194830_ChangeCompanyTableName")]
+    partial class ChangeCompanyTableName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -196,9 +199,6 @@ namespace Zyfro.Pro.Server.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("Id");
 
-                    b.Property<Guid>("CompanyId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("ContentType")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -248,8 +248,6 @@ namespace Zyfro.Pro.Server.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
 
                     b.HasIndex("OwnerId");
 
@@ -593,19 +591,11 @@ namespace Zyfro.Pro.Server.Persistence.Migrations
 
             modelBuilder.Entity("Zyfro.Pro.Server.Domain.Entities.Document", b =>
                 {
-                    b.HasOne("Zyfro.Pro.Server.Domain.Entities.Company", "Company")
-                        .WithMany("Documents")
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Zyfro.Pro.Server.Domain.Entities.ApplicationUser", "Owner")
                         .WithMany("Documents")
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Company");
 
                     b.Navigation("Owner");
                 });
@@ -707,8 +697,6 @@ namespace Zyfro.Pro.Server.Persistence.Migrations
             modelBuilder.Entity("Zyfro.Pro.Server.Domain.Entities.Company", b =>
                 {
                     b.Navigation("ApplicationUsers");
-
-                    b.Navigation("Documents");
                 });
 
             modelBuilder.Entity("Zyfro.Pro.Server.Domain.Entities.Document", b =>

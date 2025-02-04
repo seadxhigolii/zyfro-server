@@ -28,23 +28,25 @@ namespace Zyfro.Pro.Server.Common.Helpers
 
         public static string GenerateJwtToken(ApplicationUser user, string secret)
         {
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
-                var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email)
-                };
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("companyId", user.CompanyId.ToString())
+            };
 
-                var token = new JwtSecurityToken(
-                    claims: claims,
-                    expires: DateTime.UtcNow.AddHours(5),
-                    signingCredentials: credentials
-                );
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.UtcNow.AddMonths(1),
+                signingCredentials: credentials
+            );
 
-                return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
 
         public static string HashPassword(string password, string salt)
         {
@@ -70,6 +72,19 @@ namespace Zyfro.Pro.Server.Common.Helpers
                 return null;
 
             var userId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return null;
+
+            return userId;
+        }
+
+        public static string GetCurrentCompanyId()
+        {
+            var httpContext = HttpContextAccessor?.HttpContext;
+            if (httpContext == null || !httpContext.User.Identity.IsAuthenticated)
+                return null;
+
+            var userId = httpContext.User.FindFirst("companyId")?.Value;
             if (string.IsNullOrEmpty(userId))
                 return null;
 

@@ -3,16 +3,13 @@ using Amazon.S3.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Zyfro.Pro.Server.Application.Interfaces.AWS;
 
 namespace Zyfro.Pro.Server.Application.Services.AWS
 {
-    internal class S3Service : IS3Service
+    public class S3Service : IS3Service
     {
         private readonly IAmazonS3 _s3Client;
         private readonly string _bucketName;

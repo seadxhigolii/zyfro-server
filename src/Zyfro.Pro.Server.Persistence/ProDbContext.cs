@@ -15,6 +15,7 @@ namespace Zyfro.Pro.Server.Persistence
     {
         public ProDbContext(DbContextOptions<ProDbContext> options) : base(options) { }
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<Company> Companies { get; set; }
         public DbSet<Document> Documents { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<DocumentTag> DocumentTags { get; set; }
