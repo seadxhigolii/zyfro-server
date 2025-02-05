@@ -10,7 +10,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Zyfro.Pro.Server.Application.Interfaces;
 using Zyfro.Pro.Server.Application.Interfaces.AWS;
-using Zyfro.Pro.Server.Application.Models.Document;
 using Zyfro.Pro.Server.Common.Helpers;
 using Zyfro.Pro.Server.Common.Response;
 using Zyfro.Pro.Server.Domain.Entities;
@@ -33,19 +32,19 @@ namespace Zyfro.Pro.Server.Application.Services
             Guid currentUserId = Guid.Parse(AuthHelper.GetCurrentUserId());
             var data = await _proDbContext.Documents.Where(x => x.OwnerId == currentUserId).ToListAsync();
 
-            return ServiceResponse<List<Document>>.SuccessResponse(data, "Success", 200);
+            return ServiceResponse<List<Document>>.SuccessResponse(data, "Success");
         }
 
         public async Task<ServiceResponse<Document>> GetDocumentById(Guid id)
         {
             var data = await _proDbContext.Documents.FindAsync(id);
 
-            return ServiceResponse<Document>.SuccessResponse(data, "Success", 200);
+            return ServiceResponse<Document>.SuccessResponse(data, "Success");
         }
         public async Task<ServiceResponse<bool>> CreateDocument(IFormFile file)
         {
             if (file == null || file.Length == 0)
-                return ServiceResponse<bool>.ErrorResponse("Invalid file", 400);
+                return ServiceResponse<bool>.ErrorResponse("Invalid file");
 
             Guid currentUserId = Guid.Parse(AuthHelper.GetCurrentUserId());
             string currentCompanyId = AuthHelper.GetCurrentCompanyId();
@@ -68,7 +67,8 @@ namespace Zyfro.Pro.Server.Application.Services
                     Name = Path.GetFileNameWithoutExtension(file.FileName),
                     ContentType = file.ContentType,
                     FileSize = file.Length,
-                    IsArchived = false
+                    IsArchived = false,
+                    CompanyId = Guid.Parse(currentCompanyId)
                 };
 
                 await _proDbContext.Documents.AddAsync(document);
@@ -79,21 +79,21 @@ namespace Zyfro.Pro.Server.Application.Services
                 return ServiceResponse<bool>.SuccessResponse(true, "Document Uploaded Successfully", 200);
             }
 
-            return ServiceResponse<bool>.ErrorResponse("Document Upload Failed", 500);
+            return ServiceResponse<bool>.InternalErrorResponse("Document Upload Failed");
         }
 
         public async Task<ServiceResponse<bool>> SoftDeleteDocument(Guid documentId)
         {
             var document = await _proDbContext.Documents.FindAsync(documentId);
             if (document == null)
-                return ServiceResponse<bool>.ErrorResponse("Document not found", 404);
+                return ServiceResponse<bool>.NotFoundErrorResponse("Document not found");
 
             document.Deleted = true;
             await _proDbContext.SaveChangesAsync();
 
             await UpdateDocumentStatusInMetadata(document, isDeleted: true);
 
-            return ServiceResponse<bool>.SuccessResponse(true, "Document soft deleted", 200);
+            return ServiceResponse<bool>.SuccessResponse(true, "Document soft deleted");
         }
 
 

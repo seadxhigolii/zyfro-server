@@ -16,5 +16,13 @@
         {
             return new ServiceResponse<T> { Success = false, Message = message, StatusCode = statusCode };
         }
+        public static ServiceResponse<T> InternalErrorResponse(string message, int statusCode = 500)
+        {
+            return new ServiceResponse<T> { Success = false, Message = message, StatusCode = statusCode };
+        }
+        public static ServiceResponse<T> NotFoundErrorResponse(string message, int statusCode = 404)
+        {
+            return new ServiceResponse<T> { Success = false, Message = message, StatusCode = statusCode };
+        }
     }
 }
