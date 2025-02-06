@@ -75,7 +75,7 @@ namespace Zyfro.Pro.Server.Application.Services
                 await _proDbContext.Documents.AddAsync(document);
                 await _proDbContext.SaveChangesAsync();
 
-                await UpdateDirectoryMetadata(currentCompanyId, currentUserId.ToString(), documentId.ToString(), version.ToString(), now, file.FileName);
+                await UpdateCompanyMetadata(currentCompanyId, currentUserId.ToString(), documentId.ToString(), version.ToString(), now, file.FileName, "Created");
 
                 return ServiceResponse<bool>.SuccessResponse(true, "Document Uploaded Successfully", 200);
             }
@@ -92,60 +92,50 @@ namespace Zyfro.Pro.Server.Application.Services
             document.Deleted = true;
             await _proDbContext.SaveChangesAsync();
 
-            await UpdateDocumentStatusInMetadata(document, isDeleted: true);
+            await UpdateDocumentStatusInMetadata(AuthHelper.GetCurrentCompanyId(), documentId.ToString(), "Deleted");
 
             return ServiceResponse<bool>.SuccessResponse(true, "Document soft deleted");
         }
 
-        private async Task UpdateDirectoryMetadata(string companyId, string userId, string documentId, string version, DateTime date, string fileName)
+        private async Task UpdateCompanyMetadata(string companyId, string userId, string documentId, string version, DateTime date, string fileName, string status)
         {
-            var pathsToUpdate = new List<string>
-            {
-                $"company-{companyId}/metadata.json",
-                $"company-{companyId}/user-{userId}/metadata.json",
-                $"company-{companyId}/user-{userId}/documents/{documentId}/metadata.json",
-                $"company-{companyId}/user-{userId}/documents/{documentId}/versions/{version}/metadata.json",
-                $"company-{companyId}/user-{userId}/documents/{documentId}/versions/{version}/{date:yyyy/MM/dd}/metadata.json"
-            };
-
-            foreach (var path in pathsToUpdate)
-            {
-                await UpdateMetadataFile(path, companyId, userId, documentId, version, date, fileName);
-            }
-        }
-
-        private async Task UpdateMetadataFile(string metadataKey, string companyId, string userId, string documentId, string version, DateTime date, string fileName)
-        {
-            List<object> metadataList;
+            string metadataKey = $"company-{companyId}/metadata.json";
+            List<DocumentMetadata> metadataList;
 
             try
             {
                 var existingData = await _s3Service.DownloadFileAsync(metadataKey);
                 var existingJson = Encoding.UTF8.GetString(existingData);
-                metadataList = JsonSerializer.Deserialize<List<object>>(existingJson) ?? new List<object>();
+                metadataList = JsonSerializer.Deserialize<List<DocumentMetadata>>(existingJson) ?? new List<DocumentMetadata>();
             }
             catch
             {
-                metadataList = new List<object>();
+                metadataList = new List<DocumentMetadata>();
             }
 
-            bool exists = metadataList.Any(item => JsonSerializer.Serialize(item).Contains(documentId) && JsonSerializer.Serialize(item).Contains(fileName));
-            if (!exists)
+            var existingEntry = metadataList.FirstOrDefault(item => item.DocumentId == documentId);
+
+            if (existingEntry != null)
             {
-                var newEntry = new
+                existingEntry.Status = status;
+                existingEntry.Date = date.ToString("yyyy-MM-dd");
+            }
+            else
+            {
+                metadataList.Add(new DocumentMetadata
                 {
                     CompanyId = companyId,
                     UserId = userId,
                     DocumentId = documentId,
                     Version = version,
                     Date = date.ToString("yyyy-MM-dd"),
-                    FileName = fileName
-                };
-
-                metadataList.Add(newEntry);
+                    FileName = fileName,
+                    Status = status
+                });
             }
 
-            var metadataJson = JsonSerializer.Serialize(metadataList);
+            string metadataJson = JsonSerializer.Serialize(metadataList, new JsonSerializerOptions { WriteIndented = true });
+
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(metadataJson)))
             {
                 var formFile = new FormFile(stream, 0, stream.Length, "metadata", "metadata.json")
@@ -158,40 +148,43 @@ namespace Zyfro.Pro.Server.Application.Services
             }
         }
 
-        private async Task UpdateDocumentStatusInMetadata(Document document, bool? isArchived = null, bool? isDeleted = null)
+        private async Task UpdateDocumentStatusInMetadata(string companyId, string documentId, string status)
         {
-            var metadataKey = $"company-{document.CompanyId}/user-{document.OwnerId}/documents/{document.Id}/metadata.json";
+            string metadataKey = $"company-{companyId}/metadata.json";
 
-            byte[] metadataData = await _s3Service.DownloadFileAsync(metadataKey);
-            List<DocumentMetadata> metadataList = new List<DocumentMetadata>();
-
-            if (metadataData?.Length > 0)
+            try
             {
+                byte[] metadataData = await _s3Service.DownloadFileAsync(metadataKey);
+                if (metadataData?.Length == 0) return;
+
                 string jsonString = Encoding.UTF8.GetString(metadataData);
-                metadataList = JsonSerializer.Deserialize<List<DocumentMetadata>>(jsonString) ?? new List<DocumentMetadata>();
-            }
+                List<DocumentMetadata> metadataList = JsonSerializer.Deserialize<List<DocumentMetadata>>(jsonString) ?? new List<DocumentMetadata>();
 
-            foreach (var item in metadataList)
-            {
-                if (item.DocumentId == document.Id.ToString())
+                var existingEntry = metadataList.FirstOrDefault(item => item.DocumentId == documentId);
+
+                if (existingEntry != null)
                 {
-                    if (isArchived.HasValue) item.IsArchived = isArchived.Value;
-                    if (isDeleted.HasValue) item.IsDeleted = isDeleted.Value;
+                    existingEntry.Status = status;
+                    existingEntry.Date = DateTime.UtcNow.ToString("yyyy-MM-dd");
+                }
+
+                string updatedJson = JsonSerializer.Serialize(metadataList, new JsonSerializerOptions { WriteIndented = true });
+
+                using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(updatedJson)))
+                {
+                    await _s3Service.UploadFileAsync(new FormFile(stream, 0, stream.Length, "metadata", "metadata.json")
+                    {
+                        Headers = new HeaderDictionary(),
+                        ContentType = "application/json"
+                    }, metadataKey);
                 }
             }
-
-            string updatedJson = JsonSerializer.Serialize(metadataList, new JsonSerializerOptions { WriteIndented = true });
-
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(updatedJson)))
+            catch (Exception ex)
             {
-                var formFile = new FormFile(stream, 0, stream.Length, "metadata", "metadata.json")
-                {
-                    Headers = new HeaderDictionary(),
-                    ContentType = "application/json"
-                };
-
-                await _s3Service.UploadFileAsync(formFile, metadataKey);
+                Console.WriteLine($"Error updating metadata: {ex.Message}");
             }
         }
+
+
     }
 }
