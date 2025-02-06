@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Zyfro.Pro.Server.Application.Interfaces;
 using Zyfro.Pro.Server.Application.Interfaces.AWS;
+using Zyfro.Pro.Server.Application.Models.Document;
 using Zyfro.Pro.Server.Common.Helpers;
 using Zyfro.Pro.Server.Common.Response;
 using Zyfro.Pro.Server.Domain.Entities;
@@ -50,7 +51,7 @@ namespace Zyfro.Pro.Server.Application.Services
             string currentCompanyId = AuthHelper.GetCurrentCompanyId();
             DateTime now = DateTime.UtcNow;
 
-            string documentId = Guid.NewGuid().ToString();
+            Guid documentId = Guid.NewGuid();
             int version = 1;
             string key = $"company-{currentCompanyId}/user-{currentUserId}/documents/{documentId}/versions/{version}/{now:yyyy/MM/dd}/{file.FileName}";
 
@@ -60,7 +61,7 @@ namespace Zyfro.Pro.Server.Application.Services
             {
                 var document = new Document
                 {
-                    Id = Guid.NewGuid(),
+                    Id = documentId,
                     OwnerId = currentUserId,
                     CreatedAtUtc = now,
                     FilePath = key,
@@ -74,7 +75,7 @@ namespace Zyfro.Pro.Server.Application.Services
                 await _proDbContext.Documents.AddAsync(document);
                 await _proDbContext.SaveChangesAsync();
 
-                await UpdateDirectoryMetadata(currentCompanyId, currentUserId.ToString(), documentId, version.ToString(), now, file.FileName);
+                await UpdateDirectoryMetadata(currentCompanyId, currentUserId.ToString(), documentId.ToString(), version.ToString(), now, file.FileName);
 
                 return ServiceResponse<bool>.SuccessResponse(true, "Document Uploaded Successfully", 200);
             }
@@ -95,7 +96,6 @@ namespace Zyfro.Pro.Server.Application.Services
 
             return ServiceResponse<bool>.SuccessResponse(true, "Document soft deleted");
         }
-
 
         private async Task UpdateDirectoryMetadata(string companyId, string userId, string documentId, string version, DateTime date, string fileName)
         {
@@ -161,8 +161,15 @@ namespace Zyfro.Pro.Server.Application.Services
         private async Task UpdateDocumentStatusInMetadata(Document document, bool? isArchived = null, bool? isDeleted = null)
         {
             var metadataKey = $"company-{document.CompanyId}/user-{document.OwnerId}/documents/{document.Id}/metadata.json";
-            var metadataData = await _s3Service.DownloadFileAsync(metadataKey);
-            var metadataList = JsonSerializer.Deserialize<List<dynamic>>(Encoding.UTF8.GetString(metadataData)) ?? new List<dynamic>();
+
+            byte[] metadataData = await _s3Service.DownloadFileAsync(metadataKey);
+            List<DocumentMetadata> metadataList = new List<DocumentMetadata>();
+
+            if (metadataData?.Length > 0)
+            {
+                string jsonString = Encoding.UTF8.GetString(metadataData);
+                metadataList = JsonSerializer.Deserialize<List<DocumentMetadata>>(jsonString) ?? new List<DocumentMetadata>();
+            }
 
             foreach (var item in metadataList)
             {
@@ -173,7 +180,9 @@ namespace Zyfro.Pro.Server.Application.Services
                 }
             }
 
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(metadataList))))
+            string updatedJson = JsonSerializer.Serialize(metadataList, new JsonSerializerOptions { WriteIndented = true });
+
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(updatedJson)))
             {
                 var formFile = new FormFile(stream, 0, stream.Length, "metadata", "metadata.json")
                 {
@@ -184,6 +193,5 @@ namespace Zyfro.Pro.Server.Application.Services
                 await _s3Service.UploadFileAsync(formFile, metadataKey);
             }
         }
-
     }
 }

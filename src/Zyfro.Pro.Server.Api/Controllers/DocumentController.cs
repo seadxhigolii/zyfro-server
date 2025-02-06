@@ -58,7 +58,9 @@ namespace Zyfro.Pro.Server.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDocument(Guid id)
         {
-            return NoContent();
+            var response = await _documentService.SoftDeleteDocument(id);
+
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpPost("{id}/archive")]

@@ -13,5 +13,6 @@ namespace Zyfro.Pro.Server.Application.Interfaces
         Task<ServiceResponse<List<Document>>> GetAllDocuments();
         Task<ServiceResponse<Document>> GetDocumentById(Guid id);
         Task<ServiceResponse<bool>> CreateDocument(IFormFile file);
+        Task<ServiceResponse<bool>> SoftDeleteDocument(Guid id);
     }
 }
