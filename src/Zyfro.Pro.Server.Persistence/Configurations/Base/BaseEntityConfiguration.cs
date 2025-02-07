@@ -21,16 +21,13 @@ namespace Zyfro.Pro.Server.Persistence.Configurations.Base
                 .HasColumnName("CreatedAtUtc")
                 .IsRequired();
 
-            builder.Property(e => e.LastUpdatedAtUtc)
-                .HasColumnName("LastUpdatedAtUtc")
+            builder.Property(e => e.UpdatedAtUtc)
+                .HasColumnName("UpdatedAtUtc")
                 .IsRequired();
 
             builder.Property(e => e.DeletedAtUtc)
                 .HasColumnName("DeletedAtUtc")
                 .IsRequired(false);
-
-            builder.Property(e => e.Deleted)
-              .HasColumnName("Deleted");
 
             builder.HasQueryFilter(e => e.DeletedAtUtc == null);
         }

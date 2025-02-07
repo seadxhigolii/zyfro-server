@@ -13,8 +13,8 @@ namespace Zyfro.Pro.Server.Domain.Entities
         public Company()
         {
             Id = Guid.NewGuid();
-            CreatedAt = DateTime.UtcNow;
-            UpdatedAt = DateTime.UtcNow;
+            CreatedAtUtc = DateTime.UtcNow;
+            UpdatedAtUtc = DateTime.UtcNow;
         }
     }
 }

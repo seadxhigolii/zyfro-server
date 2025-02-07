@@ -32,7 +32,7 @@ namespace Zyfro.Pro.Server.Persistence
                          .ToList()
                          .ForEach(x =>
                          {
-                             x.Property(nameof(IEntityTimeStamp.UpdatedAt)).CurrentValue = DateTime.UtcNow;
+                             x.Property(nameof(IEntityTimeStamp.UpdatedAtUtc)).CurrentValue = DateTime.UtcNow;
                          });
 
             return base.SaveChangesAsync(cancellationToken);

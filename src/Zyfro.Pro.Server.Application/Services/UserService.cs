@@ -43,7 +43,7 @@ namespace Zyfro.Pro.Server.Application.Services
 
             _mapper.Map(model, user);
 
-            user.LastUpdatedAtUtc = DateTime.UtcNow;
+            user.UpdatedAtUtc = DateTime.UtcNow;
 
             if (!string.IsNullOrEmpty(model.Password))
             {
