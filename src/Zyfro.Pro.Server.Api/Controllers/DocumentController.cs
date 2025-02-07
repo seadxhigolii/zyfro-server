@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Zyfro.Pro.Server.Domain.Entities;
 using Zyfro.Pro.Server.Application.Interfaces;
+using Zyfro.Pro.Server.Api.Controllers.Base;
 
 namespace Zyfro.Pro.Server.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class DocumentController : ControllerBase
+    public class DocumentController : BaseController
     {
         private readonly IDocumentService _documentService;
         public DocumentController(IDocumentService documentService)
@@ -66,7 +67,9 @@ namespace Zyfro.Pro.Server.Api.Controllers
         [HttpPost("{id}/archive")]
         public async Task<IActionResult> ArchiveDocument(Guid id)
         {
-            return NoContent();
+            var response = await _documentService.SoftDeleteDocument(id);
+
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpPost("{id}/unarchive")]

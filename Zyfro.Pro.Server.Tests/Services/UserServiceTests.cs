@@ -4,6 +4,7 @@ using AutoMapper;
 using Zyfro.Pro.Server.Application.Services;
 using Zyfro.Pro.Server.Application.Interfaces;
 using Zyfro.Pro.Server.Domain.Entities;
+using Zyfro.Pro.Server.Domain.Enums;
 
 namespace Zyfro.Pro.Server.Tests.Services
 {
@@ -25,8 +26,8 @@ namespace Zyfro.Pro.Server.Tests.Services
         {
             return new List<ApplicationUser>
             {
-                new ApplicationUser { Id = Guid.NewGuid(), Email = "test1@example.com", Deleted = false },
-                new ApplicationUser { Id = Guid.NewGuid(), Email = "test2@example.com", Deleted = false }
+                new ApplicationUser { Id = Guid.NewGuid(), Email = "test1@example.com", CurrentStatus = EntityStatus.Created  },
+                new ApplicationUser { Id = Guid.NewGuid(), Email = "test2@example.com", CurrentStatus = EntityStatus.Created  }
             }.AsQueryable();
         }
 

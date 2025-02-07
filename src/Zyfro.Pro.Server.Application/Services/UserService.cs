@@ -8,6 +8,7 @@ using System.Linq;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Zyfro.Pro.Server.Common.Helpers;
+using Zyfro.Pro.Server.Domain.Enums;
 
 namespace Zyfro.Pro.Server.Application.Services
 {
@@ -23,7 +24,7 @@ namespace Zyfro.Pro.Server.Application.Services
         }
         public async Task<ServiceResponse<ApplicationUser>> GetByIdAsync(Guid Id)
         {
-            var user = await _dbContext.ApplicationUsers.Where(x=>x.Id == Id && x.Deleted == false).FirstOrDefaultAsync();
+            var user = await _dbContext.ApplicationUsers.Where(x=>x.Id == Id && x.CurrentStatus != EntityStatus.Deleted && x.CurrentStatus != EntityStatus.Archived).FirstOrDefaultAsync();
 
             if (user == null) {
                 return ServiceResponse<ApplicationUser>.ErrorResponse("User does not exist",404);
@@ -34,7 +35,7 @@ namespace Zyfro.Pro.Server.Application.Services
         }
         public async Task<ServiceResponse<bool>> UpdateUserAsync(UpdateUserDto model, Guid id)
         {
-            var user = await _dbContext.ApplicationUsers.Where(x => x.Id == id && !x.Deleted).FirstOrDefaultAsync();
+            var user = await _dbContext.ApplicationUsers.Where(x => x.Id == id && x.CurrentStatus != EntityStatus.Deleted).FirstOrDefaultAsync();
 
             if (user == null)
             {
@@ -57,14 +58,14 @@ namespace Zyfro.Pro.Server.Application.Services
 
         public async Task<ServiceResponse<bool>> DeleteUserAsync(Guid Id)
         {
-            var user = _dbContext.ApplicationUsers.Where(x => x.Id == Id && x.Deleted == false).FirstOrDefault();
+            var user = _dbContext.ApplicationUsers.Where(x => x.Id == Id && x.CurrentStatus != EntityStatus.Deleted == false).FirstOrDefault();
 
             if (user == null)
             {
                 return ServiceResponse<bool>.ErrorResponse("User does not exist", 404);
             }
 
-            user.Deleted = true;
+            user.CurrentStatus = EntityStatus.Deleted;
 
             _dbContext.ApplicationUsers.Update(user);
             await _dbContext.SaveChangesAsync();

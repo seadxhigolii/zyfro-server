@@ -14,6 +14,7 @@ using Zyfro.Pro.Server.Application.Models.Document;
 using Zyfro.Pro.Server.Common.Helpers;
 using Zyfro.Pro.Server.Common.Response;
 using Zyfro.Pro.Server.Domain.Entities;
+using Zyfro.Pro.Server.Domain.Enums;
 
 namespace Zyfro.Pro.Server.Application.Services
 {
@@ -68,7 +69,6 @@ namespace Zyfro.Pro.Server.Application.Services
                     Name = Path.GetFileNameWithoutExtension(file.FileName),
                     ContentType = file.ContentType,
                     FileSize = file.Length,
-                    IsArchived = false,
                     CompanyId = Guid.Parse(currentCompanyId)
                 };
 
@@ -82,6 +82,19 @@ namespace Zyfro.Pro.Server.Application.Services
 
             return ServiceResponse<bool>.InternalErrorResponse("Document Upload Failed");
         }
+        public async Task<ServiceResponse<bool>> ArchiveDocument(Guid documentId)
+        {
+            var document = await _proDbContext.Documents.FindAsync(documentId);
+            if (document == null)
+                return ServiceResponse<bool>.NotFoundErrorResponse("Document not found");
+
+            document.CurrentStatus = EntityStatus.Created;
+            await _proDbContext.SaveChangesAsync();
+
+            await UpdateDocumentStatusInMetadata(AuthHelper.GetCurrentCompanyId(), documentId.ToString(), "Deleted");
+
+            return ServiceResponse<bool>.SuccessResponse(true, "Document soft deleted");
+        }
 
         public async Task<ServiceResponse<bool>> SoftDeleteDocument(Guid documentId)
         {
@@ -89,7 +102,7 @@ namespace Zyfro.Pro.Server.Application.Services
             if (document == null)
                 return ServiceResponse<bool>.NotFoundErrorResponse("Document not found");
 
-            document.Deleted = true;
+            document.CurrentStatus = EntityStatus.Deleted;
             await _proDbContext.SaveChangesAsync();
 
             await UpdateDocumentStatusInMetadata(AuthHelper.GetCurrentCompanyId(), documentId.ToString(), "Deleted");

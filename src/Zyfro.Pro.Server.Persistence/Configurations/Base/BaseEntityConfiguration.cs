@@ -29,7 +29,9 @@ namespace Zyfro.Pro.Server.Persistence.Configurations.Base
                 .HasColumnName("DeletedAtUtc")
                 .IsRequired(false);
 
-            builder.HasQueryFilter(e => e.DeletedAtUtc == null);
+            builder.Property(e => e.CurrentStatus)
+                .HasColumnName("CurrentStatus")
+                .IsRequired();
         }
     }
 }
