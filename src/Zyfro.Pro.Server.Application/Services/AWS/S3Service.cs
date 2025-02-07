@@ -3,6 +3,7 @@ using Amazon.S3.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Zyfro.Pro.Server.Application.Interfaces.AWS;
@@ -61,6 +62,26 @@ namespace Zyfro.Pro.Server.Application.Services.AWS
             };
 
             await _s3Client.DeleteObjectAsync(request);
+        }
+
+        public async Task<bool> SetObjectTagsAsync(string fileKey, Dictionary<string, string> tags)
+        {
+            var tagSet = new List<Tag>();
+
+            foreach (var tag in tags)
+            {
+                tagSet.Add(new Tag { Key = tag.Key, Value = tag.Value });
+            }
+
+            var taggingRequest = new PutObjectTaggingRequest
+            {
+                BucketName = _bucketName,
+                Key = fileKey,
+                Tagging = new Tagging { TagSet = tagSet }
+            };
+
+            var response = await _s3Client.PutObjectTaggingAsync(taggingRequest);
+            return response.HttpStatusCode == System.Net.HttpStatusCode.OK;
         }
     }
 }

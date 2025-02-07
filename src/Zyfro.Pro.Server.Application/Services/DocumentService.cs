@@ -185,6 +185,19 @@ namespace Zyfro.Pro.Server.Application.Services
             }
         }
 
+        private async Task SetS3Expiration(string fileKey, int daysToExpire)
+        {
+            var expirationDate = DateTime.UtcNow.AddDays(daysToExpire);
+
+            var tags = new Dictionary<string, string>
+            {
+                { "ExpirationDate", expirationDate.ToString("yyyy-MM-dd") },
+                { "DeleteAfter", "90-days" }
+            };
+
+            await _s3Service.SetObjectTagsAsync(fileKey, tags);
+        }
+
 
     }
 }
