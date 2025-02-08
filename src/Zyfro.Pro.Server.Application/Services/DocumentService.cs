@@ -22,16 +22,19 @@ namespace Zyfro.Pro.Server.Application.Services
     {
         private readonly IProDbContext _proDbContext;
         private readonly IS3Service _s3Service;
+        private readonly ISecretService _secretService;
         private readonly IMapper _mapper;
-        public DocumentService(IProDbContext proDbContext, IS3Service s3Service, IMapper mapper)
+        public DocumentService(IProDbContext proDbContext, IS3Service s3Service, IMapper mapper, ISecretService secretService)
         {
             _proDbContext = proDbContext;
             _s3Service = s3Service;
             _mapper = mapper;
+            _secretService = secretService;
         }
         public async Task<ServiceResponse<List<Document>>> GetAllDocuments()
         {
             Guid currentUserId = Guid.Parse(AuthHelper.GetCurrentUserId());
+
             var data = await _proDbContext.Documents.Where(x => x.OwnerId == currentUserId).ToListAsync();
 
             return ServiceResponse<List<Document>>.SuccessResponse(data, "Success");
