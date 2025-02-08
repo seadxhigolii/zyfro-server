@@ -8,6 +8,9 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Zyfro.Pro.Server.Common.Helpers;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using static Amazon.S3.Util.S3EventNotification;
 
 namespace Zyfro.Pro.Server.Persistence
 {
@@ -27,13 +30,30 @@ namespace Zyfro.Pro.Server.Persistence
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            ChangeTracker.Entries()
-                         .Where(x => typeof(IEntityTimeStamp).IsAssignableFrom(x.Entity.GetType()) && x.State == EntityState.Modified)
-                         .ToList()
-                         .ForEach(x =>
-                         {
-                             x.Property(nameof(IEntityTimeStamp.UpdatedAtUtc)).CurrentValue = DateTime.UtcNow;
-                         });
+            var currentUserId = AuthHelper.GetCurrentUserId();
+
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.State == EntityState.Added && entry.Entity is BaseEntity<Guid> addedEntity)
+                {
+                    addedEntity.CreatedAtUtc = DateTime.UtcNow;
+                    if (!string.IsNullOrEmpty(currentUserId))
+                    {
+                        addedEntity.CreatedBy = currentUserId;
+                    }
+                }
+
+                if (entry.State == EntityState.Modified && entry.Entity is IEntityTimeStamp updatedEntity)
+                {
+                    updatedEntity.UpdatedAtUtc = DateTime.UtcNow;
+                }
+
+                var currentStateUserProperty = entry.Entity.GetType().GetProperty(nameof(BaseEntity<Guid>.CurrentStateUser));
+                if (currentStateUserProperty != null && currentStateUserProperty.CanWrite && !string.IsNullOrEmpty(currentUserId))
+                {
+                    currentStateUserProperty.SetValue(entry.Entity, currentUserId);
+                }
+            }
 
             return base.SaveChangesAsync(cancellationToken);
         }

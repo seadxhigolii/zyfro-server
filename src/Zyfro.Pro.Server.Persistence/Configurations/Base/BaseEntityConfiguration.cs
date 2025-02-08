@@ -32,6 +32,14 @@ namespace Zyfro.Pro.Server.Persistence.Configurations.Base
             builder.Property(e => e.CurrentStatus)
                 .HasColumnName("CurrentStatus")
                 .IsRequired();
+
+            builder.Property(e => e.CreatedBy)
+                .HasColumnName("CreatedBy")
+                .IsRequired(false);
+
+            builder.Property(e => e.CurrentStateUser)
+                .HasColumnName("CurrentStateUser")
+                .IsRequired(false);
         }
     }
 }
