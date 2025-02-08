@@ -13,6 +13,7 @@ namespace Zyfro.Pro.Server.Api.Extensions.Configurations
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IDocumentService, DocumentService>();
             services.AddScoped<IS3Service, S3Service>();
+            services.AddScoped<ISecretService, SecretService>();
         }
     }
 }
