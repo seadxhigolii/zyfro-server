@@ -106,9 +106,11 @@ namespace Zyfro.Pro.Server.Api.Controllers
 
         // GET: api/documents/search?ownerId={ownerId}&tag={tag}&dateFrom={dateFrom}&dateTo={dateTo}
         [HttpGet("search")]
-        public async Task<IActionResult> SearchDocuments(Guid? ownerId, string tag, DateTime? dateFrom, DateTime? dateTo)
+        public async Task<IActionResult> SearchDocuments([FromQuery] string query)
         {
-            return Ok();
+            var response = await _documentService.SearchDocument(query);
+
+            return StatusCode(response.StatusCode, response);
         }
     }
 }

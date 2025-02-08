@@ -20,5 +20,6 @@ namespace Zyfro.Pro.Server.Application.Interfaces
         Task<ServiceResponse<bool>> AddTagsToDocument(Guid documentId, string[] tags);
         Task<ServiceResponse<bool>> RemoveTagsFromDocument(Guid documentId, string[] tags);
         Task<ServiceResponse<List<DocumentMetadata>>> GetMetadataForCompany();
+        Task<ServiceResponse<List<Document>>> SearchDocument(string query);
     }
 }

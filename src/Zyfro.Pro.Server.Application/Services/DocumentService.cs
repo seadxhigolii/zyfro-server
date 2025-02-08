@@ -24,7 +24,7 @@ namespace Zyfro.Pro.Server.Application.Services
         private readonly IS3Service _s3Service;
         private readonly ISecretService _secretService;
         private readonly IMapper _mapper;
-        private ICacheService _cacheService;
+        private readonly ICacheService _cacheService;
         public DocumentService(IProDbContext proDbContext, IS3Service s3Service, IMapper mapper, ISecretService secretService, ICacheService cacheService)
         {
             _proDbContext = proDbContext;
@@ -268,6 +268,42 @@ namespace Zyfro.Pro.Server.Application.Services
 
             return ServiceResponse<List<DocumentMetadata>>.SuccessResponse(metadataList, "Metadata retrieved successfully");
         }
+
+        public async Task<ServiceResponse<List<Document>>> SearchDocument(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return ServiceResponse<List<Document>>.ErrorResponse("Search query cannot be empty");
+
+            string currentCompanyId = AuthHelper.GetCurrentCompanyId();
+            string cacheKey = currentCompanyId;
+
+            var metadataList = await _cacheService.GetAsync<List<DocumentMetadata>>(cacheKey);
+            if (metadataList == null)
+            {
+                string metadataKey = $"company-{currentCompanyId}/metadata.json";
+                byte[] metadataData = await _s3Service.DownloadFileAsync(metadataKey);
+                if (metadataData == null || metadataData.Length == 0)
+                    return ServiceResponse<List<Document>>.NotFoundErrorResponse("No metadata found for the company");
+
+                string jsonString = Encoding.UTF8.GetString(metadataData);
+                metadataList = JsonSerializer.Deserialize<List<DocumentMetadata>>(jsonString) ?? new List<DocumentMetadata>();
+
+                await _cacheService.SetAsync(cacheKey, metadataList, TimeSpan.FromHours(1));
+            }
+
+            var matchingMetadata = metadataList.Where(m => m.FileName.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (!matchingMetadata.Any())
+                return ServiceResponse<List<Document>>.NotFoundErrorResponse("No matching documents found");
+
+            var documentIds = matchingMetadata.Select(m => Guid.Parse(m.DocumentId)).ToList();
+
+            var documents = await _proDbContext.Documents
+                .Where(d => documentIds.Contains(d.Id))
+                .ToListAsync();
+
+            return ServiceResponse<List<Document>>.SuccessResponse(documents, "Documents retrieved successfully");
+        }
+
 
         private async Task UpdateCompanyMetadata(string companyId, string userId, string documentId, string version, DateTime date, string fileName, string status)
         {
