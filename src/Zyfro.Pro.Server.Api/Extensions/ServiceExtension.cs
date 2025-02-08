@@ -24,6 +24,7 @@ namespace Zyfro.Pro.Server.Api.Extensions
             services.AddMemoryCache();
             services.AddHttpContextAccessor();
             services.AddSerilogConfiguration(configuration);
+            services.RedisService(configuration);
 
             return services;
         }

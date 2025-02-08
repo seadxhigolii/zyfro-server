@@ -96,6 +96,14 @@ namespace Zyfro.Pro.Server.Api.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
+        [HttpGet("GetMetadata")]
+        public async Task<IActionResult> GetMetadata()
+        {
+            var response = await _documentService.GetMetadataForCompany();
+
+            return StatusCode(response.StatusCode, response);
+        }
+
         // GET: api/documents/search?ownerId={ownerId}&tag={tag}&dateFrom={dateFrom}&dateTo={dateTo}
         [HttpGet("search")]
         public async Task<IActionResult> SearchDocuments(Guid? ownerId, string tag, DateTime? dateFrom, DateTime? dateTo)

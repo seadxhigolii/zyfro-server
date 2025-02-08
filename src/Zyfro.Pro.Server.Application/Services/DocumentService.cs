@@ -24,12 +24,14 @@ namespace Zyfro.Pro.Server.Application.Services
         private readonly IS3Service _s3Service;
         private readonly ISecretService _secretService;
         private readonly IMapper _mapper;
-        public DocumentService(IProDbContext proDbContext, IS3Service s3Service, IMapper mapper, ISecretService secretService)
+        private ICacheService _cacheService;
+        public DocumentService(IProDbContext proDbContext, IS3Service s3Service, IMapper mapper, ISecretService secretService, ICacheService cacheService)
         {
             _proDbContext = proDbContext;
             _s3Service = s3Service;
             _mapper = mapper;
             _secretService = secretService;
+            _cacheService = cacheService;
         }
         public async Task<ServiceResponse<List<Document>>> GetAllDocuments()
         {
@@ -243,11 +245,34 @@ namespace Zyfro.Pro.Server.Application.Services
             return ServiceResponse<bool>.SuccessResponse(true, "Tag(s) removed successfully");
         }
 
+        public async Task<ServiceResponse<List<DocumentMetadata>>> GetMetadataForCompany()
+        {
+            string currentCompanyId = AuthHelper.GetCurrentCompanyId();
 
+            string metadataKey = $"company-{currentCompanyId}/metadata.json";
+
+            var cachedMetadata = await _cacheService.GetAsync<List<DocumentMetadata>>(currentCompanyId);
+            if (cachedMetadata != null)
+            {
+                return ServiceResponse<List<DocumentMetadata>>.SuccessResponse(cachedMetadata, "Metadata retrieved from cache successfully");
+            }
+
+            byte[] metadataData = await _s3Service.DownloadFileAsync(metadataKey);
+            if (metadataData == null || metadataData.Length == 0)
+                return ServiceResponse<List<DocumentMetadata>>.NotFoundErrorResponse("No metadata found for the company");
+
+            string jsonString = Encoding.UTF8.GetString(metadataData);
+            List<DocumentMetadata> metadataList = JsonSerializer.Deserialize<List<DocumentMetadata>>(jsonString) ?? new List<DocumentMetadata>();
+
+            await _cacheService.SetAsync(currentCompanyId, metadataList, TimeSpan.FromHours(1));
+
+            return ServiceResponse<List<DocumentMetadata>>.SuccessResponse(metadataList, "Metadata retrieved successfully");
+        }
 
         private async Task UpdateCompanyMetadata(string companyId, string userId, string documentId, string version, DateTime date, string fileName, string status)
         {
             string metadataKey = $"company-{companyId}/metadata.json";
+            string cacheKey = $"{companyId}";
             List<DocumentMetadata> metadataList;
 
             try
@@ -294,43 +319,44 @@ namespace Zyfro.Pro.Server.Application.Services
 
                 await _s3Service.UploadFileAsync(formFile, metadataKey);
             }
+
+            await _cacheService.SetAsync(cacheKey, metadataList, TimeSpan.FromHours(1));
         }
+
 
         private async Task UpdateDocumentStatusInMetadata(string companyId, string documentId, string status)
         {
             string metadataKey = $"company-{companyId}/metadata.json";
+            string cacheKey = $"{companyId}";
 
-            try
+            byte[] metadataData = await _s3Service.DownloadFileAsync(metadataKey);
+            if (metadataData?.Length == 0) return;
+
+            string jsonString = Encoding.UTF8.GetString(metadataData);
+            List<DocumentMetadata> metadataList = JsonSerializer.Deserialize<List<DocumentMetadata>>(jsonString) ?? new List<DocumentMetadata>();
+
+            var existingEntry = metadataList.FirstOrDefault(item => item.DocumentId == documentId);
+
+            if (existingEntry != null)
             {
-                byte[] metadataData = await _s3Service.DownloadFileAsync(metadataKey);
-                if (metadataData?.Length == 0) return;
-
-                string jsonString = Encoding.UTF8.GetString(metadataData);
-                List<DocumentMetadata> metadataList = JsonSerializer.Deserialize<List<DocumentMetadata>>(jsonString) ?? new List<DocumentMetadata>();
-
-                var existingEntry = metadataList.FirstOrDefault(item => item.DocumentId == documentId);
-
-                if (existingEntry != null)
-                {
-                    existingEntry.Status = status;
-                    existingEntry.Date = DateTime.UtcNow.ToString("yyyy-MM-dd");
-                }
-
-                string updatedJson = JsonSerializer.Serialize(metadataList, new JsonSerializerOptions { WriteIndented = true });
-
-                using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(updatedJson)))
-                {
-                    await _s3Service.UploadFileAsync(new FormFile(stream, 0, stream.Length, "metadata", "metadata.json")
-                    {
-                        Headers = new HeaderDictionary(),
-                        ContentType = "application/json"
-                    }, metadataKey);
-                }
+                existingEntry.Status = status;
+                existingEntry.Date = DateTime.UtcNow.ToString("yyyy-MM-dd");
             }
-            catch (Exception ex)
+
+            string updatedJson = JsonSerializer.Serialize(metadataList, new JsonSerializerOptions { WriteIndented = true });
+
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(updatedJson)))
             {
-                Console.WriteLine($"Error updating metadata: {ex.Message}");
+                await _s3Service.UploadFileAsync(new FormFile(stream, 0, stream.Length, "metadata", "metadata.json")
+                {
+                    Headers = new HeaderDictionary(),
+                    ContentType = "application/json"
+                }, metadataKey);
             }
+
+            await _cacheService.SetAsync(cacheKey, metadataList, TimeSpan.FromHours(1));
+            
         }
+
     }
 }
