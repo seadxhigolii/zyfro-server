@@ -40,20 +40,20 @@ namespace Zyfro.Pro.Server.Api.Controllers
 
             var response = await _documentService.CreateDocument(file);
 
-            if (response.Success)
-            {
-                return Ok(new { Message = response.Message, Data = response.Data });
-            }
-            else
-            {
-                return StatusCode(response.StatusCode, new { Message = response.Message });
-            }
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateDocument(Guid id, [FromBody] Document updatedDocument)
+        public async Task<IActionResult> UpdateDocument(Guid id, IFormFile file)
         {
-            return NoContent();
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            var response = await _documentService.UpdateDocument(id,file);
+
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpDelete("{id}")]

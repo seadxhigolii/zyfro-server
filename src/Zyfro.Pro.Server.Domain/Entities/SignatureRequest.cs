@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Zyfro.Pro.Server.Domain.Entities.Base;
 
 namespace Zyfro.Pro.Server.Domain.Entities
@@ -19,7 +15,7 @@ namespace Zyfro.Pro.Server.Domain.Entities
         public ApplicationUser RequestedTo { get; set; }
 
         public bool IsSigned { get; set; } = false;
-        public DateTime? SignedAt { get; set; }
+        public DateTime? SignedAtUtc { get; set; }
     }
 
 }

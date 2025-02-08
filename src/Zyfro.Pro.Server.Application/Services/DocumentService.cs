@@ -69,10 +69,22 @@ namespace Zyfro.Pro.Server.Application.Services
                     Name = Path.GetFileNameWithoutExtension(file.FileName),
                     ContentType = file.ContentType,
                     FileSize = file.Length,
-                    CompanyId = Guid.Parse(currentCompanyId)
+                    CompanyId = Guid.Parse(currentCompanyId),
+                    CurrentVersion = version,
                 };
 
                 await _proDbContext.Documents.AddAsync(document);
+                await _proDbContext.SaveChangesAsync();
+
+                var documentVersion = new DocumentVersion
+                {
+                    Id = Guid.NewGuid(),
+                    DocumentId = document.Id,
+                    FilePath = key,
+                    VersionNumber = version
+                };
+
+                await _proDbContext.DocumentVersions.AddAsync(documentVersion);
                 await _proDbContext.SaveChangesAsync();
 
                 await UpdateCompanyMetadata(currentCompanyId, currentUserId.ToString(), documentId.ToString(), version.ToString(), now, file.FileName, "Created");
@@ -109,6 +121,53 @@ namespace Zyfro.Pro.Server.Application.Services
 
             return ServiceResponse<bool>.SuccessResponse(true, "Document soft deleted");
         }
+
+        public async Task<ServiceResponse<bool>> UpdateDocument(Guid id, IFormFile newFile)
+        {
+            if (newFile == null || newFile.Length == 0)
+                return ServiceResponse<bool>.ErrorResponse("Invalid file");
+
+            var existingDocument = await _proDbContext.Documents.FindAsync(id);
+            if (existingDocument == null)
+                return ServiceResponse<bool>.NotFoundErrorResponse("Document not found");
+
+            existingDocument.CurrentStatus = EntityStatus.Modified;
+
+            Guid currentUserId = existingDocument.OwnerId;
+            string currentCompanyId = existingDocument.CompanyId.ToString();
+            DateTime now = DateTime.UtcNow;
+
+            int newVersion = existingDocument.CurrentVersion + 1;
+            Guid newDocumentId = Guid.NewGuid();
+            string newKey = $"company-{currentCompanyId}/user-{currentUserId}/documents/{existingDocument.Id}/versions/{newVersion}/{now:yyyy/MM/dd}/{newFile.FileName}";
+
+            var uploadResult = await _s3Service.UploadFileAsync(newFile, newKey);
+            if (string.IsNullOrEmpty(uploadResult))
+                return ServiceResponse<bool>.InternalErrorResponse("Failed to upload new document version");
+
+            existingDocument.CurrentVersion = newVersion;
+            existingDocument.FilePath = newKey;
+            existingDocument.CurrentStatus = EntityStatus.Modified;
+
+            _proDbContext.Documents.Update(existingDocument);
+            await _proDbContext.SaveChangesAsync();
+
+            var newDocumentVersion = new DocumentVersion
+            {
+                Id = Guid.NewGuid(),
+                DocumentId = existingDocument.Id,
+                VersionNumber = newVersion,
+                FilePath = newKey
+            };
+
+            await _proDbContext.DocumentVersions.AddAsync(newDocumentVersion);
+            await _proDbContext.SaveChangesAsync();
+
+            await UpdateCompanyMetadata(currentCompanyId, currentUserId.ToString(), existingDocument.Id.ToString(), newVersion.ToString(), now, newFile.FileName, "Modified");
+
+            return ServiceResponse<bool>.SuccessResponse(true, "Document updated successfully");
+        }
+
 
         private async Task UpdateCompanyMetadata(string companyId, string userId, string documentId, string version, DateTime date, string fileName, string status)
         {
@@ -197,20 +256,5 @@ namespace Zyfro.Pro.Server.Application.Services
                 Console.WriteLine($"Error updating metadata: {ex.Message}");
             }
         }
-
-        private async Task SetS3Expiration(string fileKey, int daysToExpire)
-        {
-            var expirationDate = DateTime.UtcNow.AddDays(daysToExpire);
-
-            var tags = new Dictionary<string, string>
-            {
-                { "ExpirationDate", expirationDate.ToString("yyyy-MM-dd") },
-                { "DeleteAfter", "90-days" }
-            };
-
-            await _s3Service.SetObjectTagsAsync(fileKey, tags);
-        }
-
-
     }
 }

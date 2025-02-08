@@ -10,6 +10,7 @@ namespace Zyfro.Pro.Server.Domain.Entities
         public string FilePath { get; set; } // Cloud Storage URL
         public string ContentType { get; set; } // PDF, DOCX, etc.
         public long FileSize { get; set; }
+        public int CurrentVersion { get; set; }
 
         // Foreign Key - User who uploaded the document
         public Guid OwnerId { get; set; }
