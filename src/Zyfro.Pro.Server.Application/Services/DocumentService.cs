@@ -92,23 +92,38 @@ namespace Zyfro.Pro.Server.Application.Services
 
                 await UpdateCompanyMetadata(currentCompanyId, currentUserId.ToString(), documentId.ToString(), version.ToString(), now, file.FileName, "Created");
 
-                return ServiceResponse<bool>.SuccessResponse(true, "Document Uploaded Successfully", 200);
+                return ServiceResponse<bool>.SuccessResponse(true, "Document uploaded successfully", 200);
             }
 
-            return ServiceResponse<bool>.InternalErrorResponse("Document Upload Failed");
+            return ServiceResponse<bool>.InternalErrorResponse("Document upload failed");
         }
+
         public async Task<ServiceResponse<bool>> ArchiveDocument(Guid documentId)
         {
             var document = await _proDbContext.Documents.FindAsync(documentId);
             if (document == null)
                 return ServiceResponse<bool>.NotFoundErrorResponse("Document not found");
 
-            document.CurrentStatus = EntityStatus.Created;
+            document.CurrentStatus = EntityStatus.Archived;
             await _proDbContext.SaveChangesAsync();
 
-            await UpdateDocumentStatusInMetadata(AuthHelper.GetCurrentCompanyId(), documentId.ToString(), "Deleted");
+            await UpdateDocumentStatusInMetadata(AuthHelper.GetCurrentCompanyId(), documentId.ToString(), "Archived");
 
-            return ServiceResponse<bool>.SuccessResponse(true, "Document soft deleted");
+            return ServiceResponse<bool>.SuccessResponse(true, "Document archived");
+        }
+        public async Task<ServiceResponse<bool>> UnarchiveDocument(Guid documentId)
+        {
+            var document = await _proDbContext.Documents.FindAsync(documentId);
+            if (document == null)
+                return ServiceResponse<bool>.NotFoundErrorResponse("Document not found");
+
+            document.CurrentStatus = EntityStatus.Modified;
+            await _proDbContext.SaveChangesAsync();
+
+            await UpdateDocumentStatusInMetadata(AuthHelper.GetCurrentCompanyId(), documentId.ToString(), "Modified");
+
+
+            return ServiceResponse<bool>.SuccessResponse(true, "Document unarchived");
         }
 
         public async Task<ServiceResponse<bool>> SoftDeleteDocument(Guid documentId)
@@ -122,7 +137,7 @@ namespace Zyfro.Pro.Server.Application.Services
 
             await UpdateDocumentStatusInMetadata(AuthHelper.GetCurrentCompanyId(), documentId.ToString(), "Deleted");
 
-            return ServiceResponse<bool>.SuccessResponse(true, "Document soft deleted");
+            return ServiceResponse<bool>.SuccessResponse(true, "Document deleted");
         }
 
         public async Task<ServiceResponse<bool>> UpdateDocument(Guid id, IFormFile newFile)
@@ -133,8 +148,6 @@ namespace Zyfro.Pro.Server.Application.Services
             var existingDocument = await _proDbContext.Documents.FindAsync(id);
             if (existingDocument == null)
                 return ServiceResponse<bool>.NotFoundErrorResponse("Document not found");
-
-            existingDocument.CurrentStatus = EntityStatus.Modified;
 
             Guid currentUserId = existingDocument.OwnerId;
             string currentCompanyId = existingDocument.CompanyId.ToString();
@@ -155,6 +168,17 @@ namespace Zyfro.Pro.Server.Application.Services
             _proDbContext.Documents.Update(existingDocument);
             await _proDbContext.SaveChangesAsync();
 
+            var existingDocumentVersions = await _proDbContext.DocumentVersions
+                                                .Where(x => x.DocumentId == existingDocument.Id && x.CurrentStatus != EntityStatus.Archived)
+                                                .ToListAsync();
+
+            foreach(var docVersion in existingDocumentVersions)
+            {
+                docVersion.CurrentStatus = EntityStatus.Archived;
+            }
+
+            _proDbContext.DocumentVersions.UpdateRange(existingDocumentVersions);
+
             var newDocumentVersion = new DocumentVersion
             {
                 Id = Guid.NewGuid(),
@@ -170,6 +194,55 @@ namespace Zyfro.Pro.Server.Application.Services
 
             return ServiceResponse<bool>.SuccessResponse(true, "Document updated successfully");
         }
+
+        public async Task<ServiceResponse<bool>> AddTagsToDocument(Guid documentId, string[] tags)
+        {
+            var document = await _proDbContext.Documents.FindAsync(documentId);
+            if (document == null)
+                return ServiceResponse<bool>.NotFoundErrorResponse("Document not found");
+
+            var existingTags = await _proDbContext.DocumentTags
+                .Where(dt => dt.DocumentId == documentId)
+                .Select(dt => dt.Tag)
+                .ToListAsync();
+
+            var newTags = tags.Except(existingTags).ToList();
+
+            if (newTags.Any())
+            {
+                var documentTags = newTags.Select(tag => new DocumentTag
+                {
+                    Id = Guid.NewGuid(),
+                    DocumentId = documentId,
+                    Tag = tag
+                }).ToList();
+
+                await _proDbContext.DocumentTags.AddRangeAsync(documentTags);
+                await _proDbContext.SaveChangesAsync();
+            }
+
+            return ServiceResponse<bool>.SuccessResponse(true, "Tag(s) added successfully");
+        }
+
+        public async Task<ServiceResponse<bool>> RemoveTagsFromDocument(Guid documentId, string[] tags)
+        {
+            var document = await _proDbContext.Documents.FindAsync(documentId);
+            if (document == null)
+                return ServiceResponse<bool>.NotFoundErrorResponse("Document not found");
+
+            var existingTags = await _proDbContext.DocumentTags
+                .Where(dt => dt.DocumentId == documentId && tags.Contains(dt.Tag))
+                .ToListAsync();
+
+            if (existingTags.Any())
+            {
+                _proDbContext.DocumentTags.RemoveRange(existingTags);
+                await _proDbContext.SaveChangesAsync();
+            }
+
+            return ServiceResponse<bool>.SuccessResponse(true, "Tag(s) removed successfully");
+        }
+
 
 
         private async Task UpdateCompanyMetadata(string companyId, string userId, string documentId, string version, DateTime date, string fileName, string status)

@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace Zyfro.Pro.Server.Domain.Enums
+﻿namespace Zyfro.Pro.Server.Domain.Enums
 {
     public enum EntityStatus
     {

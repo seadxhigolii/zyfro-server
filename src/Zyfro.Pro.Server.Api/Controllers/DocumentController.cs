@@ -25,7 +25,7 @@ namespace Zyfro.Pro.Server.Api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDocumentById(Guid id)
         {
-            var response = await _documentService.GetAllDocuments();
+            var response = await _documentService.GetDocumentById(id);
 
             return StatusCode(response.StatusCode, response);
         }
@@ -67,7 +67,7 @@ namespace Zyfro.Pro.Server.Api.Controllers
         [HttpPost("{id}/archive")]
         public async Task<IActionResult> ArchiveDocument(Guid id)
         {
-            var response = await _documentService.SoftDeleteDocument(id);
+            var response = await _documentService.ArchiveDocument(id);
 
             return StatusCode(response.StatusCode, response);
         }
@@ -75,19 +75,25 @@ namespace Zyfro.Pro.Server.Api.Controllers
         [HttpPost("{id}/unarchive")]
         public async Task<IActionResult> UnarchiveDocument(Guid id)
         {
-            return NoContent();
+            var response = await _documentService.UnarchiveDocument(id);
+
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpPost("{id}/tags")]
-        public async Task<IActionResult> AddTagToDocument(Guid id, [FromBody] DocumentTag tag)
+        public async Task<IActionResult> AddTagsToDocument(Guid id, string[] tags)
         {
-            return Ok();
+            var response = await _documentService.AddTagsToDocument(id,tags);
+
+            return StatusCode(response.StatusCode, response);
         }
 
-        [HttpDelete("{id}/tags/{tagId}")]
-        public async Task<IActionResult> RemoveTagFromDocument(Guid id, Guid tagId)
+        [HttpDelete("{documentId}/tags")]
+        public async Task<IActionResult> RemoveTagsFromDocument(Guid documentId, string[] tags)
         {
-            return NoContent();
+            var response = await _documentService.RemoveTagsFromDocument(documentId, tags);
+
+            return StatusCode(response.StatusCode, response);
         }
 
         // GET: api/documents/search?ownerId={ownerId}&tag={tag}&dateFrom={dateFrom}&dateTo={dateTo}

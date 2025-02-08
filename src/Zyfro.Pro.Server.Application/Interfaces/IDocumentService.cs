@@ -13,7 +13,10 @@ namespace Zyfro.Pro.Server.Application.Interfaces
         Task<ServiceResponse<Document>> GetDocumentById(Guid id);
         Task<ServiceResponse<bool>> CreateDocument(IFormFile file);
         Task<ServiceResponse<bool>> ArchiveDocument(Guid id);
+        Task<ServiceResponse<bool>> UnarchiveDocument(Guid id);
         Task<ServiceResponse<bool>> SoftDeleteDocument(Guid id);
         Task<ServiceResponse<bool>> UpdateDocument(Guid id, IFormFile file);
+        Task<ServiceResponse<bool>> AddTagsToDocument(Guid documentId, string[] tags);
+        Task<ServiceResponse<bool>> RemoveTagsFromDocument(Guid documentId, string[] tags);
     }
 }
