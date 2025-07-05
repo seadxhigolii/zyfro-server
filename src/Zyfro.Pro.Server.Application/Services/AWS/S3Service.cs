@@ -71,7 +71,7 @@ namespace Zyfro.Pro.Server.Application.Services.AWS
             foreach (var tag in tags)
             {
                 tagSet.Add(new Tag { Key = tag.Key, Value = tag.Value });
-            }
+            } 
 
             var taggingRequest = new PutObjectTaggingRequest
             {
